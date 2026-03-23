@@ -14,7 +14,7 @@ function sendOTP() {
 
   generatedOTP = String(Math.floor(1000 + Math.random() * 9000));
   alert("Demo OTP: " + generatedOTP);
-  document.getElementById("otpBox").style.display = "block";
+  document.getElementById("otpBox").classList.remove("hidden");
 }
 
 function verifyOTP() {

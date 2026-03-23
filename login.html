@@ -1,20 +1,41 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Login</title>
+<title>Pharmacy Hub Login</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<h2>Medical Shop Login</h2>
-<div id="loginBox" class="panel">
-<input id="email" type="email" placeholder="Enter email"><br><br>
-<button onclick="sendOTP()">Send OTP</button>
-<div id="otpBox" style="display:none;">
-<input id="otp" inputmode="numeric" placeholder="Enter OTP"><br><br>
-<button onclick="verifyOTP()">Verify</button>
-</div>
+<div class="login-shell">
+  <section class="panel login-card">
+    <p class="eyebrow">Secure access</p>
+    <h2>Pharmacy Hub Login</h2>
+    <p>Use your email to receive a demo OTP and enter the pharmacy dashboard.</p>
+
+    <div class="form-grid">
+      <label>
+        <span>Email Address</span>
+        <input id="email" type="email" placeholder="owner@pharmacy.com">
+      </label>
+    </div>
+
+    <div class="action-row">
+      <button class="btn-primary" onclick="sendOTP()">Send OTP</button>
+    </div>
+
+    <div id="otpBox" class="hidden">
+      <div class="form-grid">
+        <label>
+          <span>OTP</span>
+          <input id="otp" inputmode="numeric" placeholder="Enter the OTP">
+        </label>
+      </div>
+      <div class="action-row">
+        <button class="btn-secondary" onclick="verifyOTP()">Verify OTP</button>
+      </div>
+    </div>
+  </section>
 </div>
 <script src="auth.js"></script>
 </body>
