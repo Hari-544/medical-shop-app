@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<h2>Medical Shop Login</h2>
+<div id="loginBox" class="panel">
+<input id="email" type="email" placeholder="Enter email"><br><br>
+<button onclick="sendOTP()">Send OTP</button>
+<div id="otpBox" style="display:none;">
+<input id="otp" inputmode="numeric" placeholder="Enter OTP"><br><br>
+<button onclick="verifyOTP()">Verify</button>
+</div>
+</div>
+<script src="auth.js"></script>
+</body>
+</html>

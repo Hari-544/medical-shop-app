@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Medical Shop</title>
+<script src="https://unpkg.com/@zxing/library@0.19.1"></script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<h1>Medical Shop Manager</h1>
+<div class="toolbar">
+<button onclick="addStock()">Add Stock</button>
+<button onclick="viewStock()">View Stock</button>
+<button onclick="scanBill()">Scan &amp; Bill</button>
+<button onclick="logout()">Logout</button>
+</div>
+<div id="content" class="panel"></div>
+<video id="video" width="300" muted playsinline></video>
+<script src="app.js"></script>
+</body>
+</html>
