@@ -10,6 +10,17 @@ function setContent(html) {
   document.getElementById("content").innerHTML = html;
 }
 
+function searchCustomer(){
+
+let phone = prompt("Enter phone number")
+
+let sales = JSON.parse(localStorage.getItem("sales")) || []
+
+let result = sales.filter(s => s.phone == phone)
+
+console.log(result)
+}
+
 function showScannerMessage(message) {
   const content = document.getElementById("content");
   const status = document.getElementById("scannerStatus");
@@ -49,38 +60,47 @@ function manualAdd() {
   processAdd(code);
 }
 
-function processAdd(code) {
-  stopScanner();
-  setContent(`
-    <h3>Barcode: ${code}</h3>
-    <input id="qty" type="number" min="1" placeholder="Quantity">
-    <input id="price" type="number" min="1" placeholder="Price">
-    <button onclick="saveStock('${code}')">Save</button>
-  `);
+function processAdd(code){
+
+stopScanner()
+
+document.getElementById("content").innerHTML = `
+<h3>Barcode: ${code}</h3>
+
+<input id="name" placeholder="Medicine Name">
+<input id="qty" placeholder="Quantity">
+<input id="price" placeholder="Price">
+
+<button onclick="saveStock('${code}')">Save</button>
+`
 }
 
-function saveStock(code) {
-  const qty = Number(document.getElementById("qty").value);
-  const price = Number(document.getElementById("price").value);
+function saveStock(code){
 
-  if (!Number.isInteger(qty) || qty <= 0 || !Number.isInteger(price) || price <= 0) {
-    alert("Enter a valid quantity and price.");
-    return;
-  }
+let name = document.getElementById("name").value
+let qty = parseInt(document.getElementById("qty").value)
+let price = parseInt(document.getElementById("price").value)
 
-  const data = readMeds();
-  const existing = data.find((med) => med.barcode === code);
+if(!name || !qty || !price){
+alert("Enter all details ❌")
+return
+}
 
-  if (existing) {
-    existing.qty = Number(existing.qty) + qty;
-    existing.price = price;
-  } else {
-    data.push({ barcode: code, qty, price });
-  }
+let data = JSON.parse(localStorage.getItem("meds")) || []
 
-  saveMeds(data);
-  alert("Stock updated successfully.");
-  viewStock();
+let existing = data.find(m => m.barcode == code)
+
+if(existing){
+existing.qty += qty
+existing.price = price
+existing.name = name
+}else{
+data.push({barcode: code, name: name, qty: qty, price: price})
+}
+
+localStorage.setItem("meds", JSON.stringify(data))
+
+alert("Stock Updated ✅")
 }
 
 function viewStock() {
@@ -119,49 +139,98 @@ function manualBill() {
   processBill(code);
 }
 
-function processBill(code) {
-  stopScanner();
-  setContent(`
-    <h3>Barcode: ${code}</h3>
-    <input id="qty" type="number" min="1" placeholder="Quantity">
-    <button onclick="generateBill('${code}')">Generate Bill</button>
-  `);
+function processBill(code){
+
+stopScanner()
+
+document.getElementById("content").innerHTML = `
+<h3>Barcode: ${code}</h3>
+
+<input id="custName" placeholder="Customer Name">
+<input id="custPhone" placeholder="Phone Number">
+
+<input id="qty" placeholder="Quantity">
+
+<button onclick="generateBill('${code}')">Generate Bill</button>
+`
 }
 
-function generateBill(code) {
-  const qty = Number(document.getElementById("qty").value);
+function generateBill(code){
 
-  if (!Number.isInteger(qty) || qty <= 0) {
-    alert("Enter a valid quantity.");
-    return;
-  }
+let qty = parseInt(document.getElementById("qty").value)
+let custName = document.getElementById("custName").value
+let custPhone = document.getElementById("custPhone").value
 
-  const data = readMeds();
-  const med = data.find((item) => item.barcode === code);
+if(!qty || !custName){
+alert("Enter details ❌")
+return
+}
 
-  if (!med) {
-    alert("Medicine not found.");
-    return;
-  }
+let data = JSON.parse(localStorage.getItem("meds")) || []
+let med = data.find(m => m.barcode == code)
 
-  if (Number(med.qty) < qty) {
-    alert("Not enough stock.");
-    return;
-  }
+if(!med){
+alert("Medicine not found ❌")
+return
+}
 
-  med.qty = Number(med.qty) - qty;
-  saveMeds(data);
+if(med.qty < qty){
+alert("Not enough stock ❌")
+return
+}
 
-  const total = qty * Number(med.price);
+med.qty -= qty
+localStorage.setItem("meds", JSON.stringify(data))
 
-  setContent(`
-    <h2>Invoice</h2>
-    <p>Barcode: ${code}</p>
-    <p>Qty: ${qty}</p>
-    <p>Price: Rs. ${med.price}</p>
-    <h3>Total: Rs. ${total}</h3>
-    <button onclick="window.print()">Print</button>
-  `);
+let total = qty * med.price
+
+// 📅 DATE
+let today = new Date().toLocaleDateString()
+let month = new Date().getMonth()
+
+// 💰 DAILY INCOME
+let daily = JSON.parse(localStorage.getItem("dailyIncome")) || {}
+daily[today] = (daily[today] || 0) + total
+localStorage.setItem("dailyIncome", JSON.stringify(daily))
+
+// 💰 MONTHLY INCOME
+let monthly = JSON.parse(localStorage.getItem("monthlyIncome")) || {}
+monthly[month] = (monthly[month] || 0) + total
+localStorage.setItem("monthlyIncome", JSON.stringify(monthly))
+
+// 🧾 SAVE SALES HISTORY
+let sales = JSON.parse(localStorage.getItem("sales")) || []
+
+let sale = {
+customerName: custName,
+phone: custPhone,
+medicine: med.name,
+barcode: code,
+qty: qty,
+price: med.price,
+total: total,
+date: new Date().toLocaleString()
+}
+
+sales.push(sale)
+
+localStorage.setItem("sales", JSON.stringify(sales))
+
+// 🧾 INVOICE PAGE
+document.getElementById("content").innerHTML = `
+<h2>Invoice</h2>
+
+<p><b>Customer:</b> ${custName}</p>
+<p><b>Phone:</b> ${custPhone}</p>
+
+<p><b>Medicine:</b> ${med.name}</p>
+<p>Qty: ${qty}</p>
+<p>Price: ₹${med.price}</p>
+
+<h3>Total: ₹${total}</h3>
+
+<button onclick="window.print()">Print</button>
+`
 }
 
 function stopScanner() {
@@ -240,6 +309,55 @@ function startScan(type) {
       alert("Unable to access the camera. Please allow camera permission and try again.");
       console.error(err);
     });
+}
+
+function viewSales(){
+
+let sales = JSON.parse(localStorage.getItem("sales")) || []
+
+let html = "<h2>Customer Purchase History</h2>"
+
+if(sales.length === 0){
+html += "<p>No sales yet</p>"
+}else{
+
+sales.reverse().forEach(s => {
+
+html += `
+<div style="border:1px solid #ccc; margin:10px; padding:10px;">
+<p><b>Name:</b> ${s.customerName}</p>
+<p><b>Phone:</b> ${s.phone}</p>
+<p><b>Medicine:</b> ${s.medicine}</p>
+<p>Qty: ${s.qty}</p>
+<p>Total: ₹${s.total}</p>
+<p>Date: ${s.date}</p>
+</div>
+`
+
+})
+
+}
+
+document.getElementById("content").innerHTML = html
+}
+
+function viewIncome(){
+
+let today = new Date().toLocaleDateString()
+let month = new Date().getMonth()
+
+let daily = JSON.parse(localStorage.getItem("dailyIncome")) || {}
+let monthly = JSON.parse(localStorage.getItem("monthlyIncome")) || {}
+
+let todayIncome = daily[today] || 0
+let monthIncome = monthly[month] || 0
+
+document.getElementById("content").innerHTML = `
+<h2>Income Report</h2>
+
+<p>Today's Income: ₹${todayIncome}</p>
+<p>This Month Income: ₹${monthIncome}</p>
+`
 }
 
 function logout() {
