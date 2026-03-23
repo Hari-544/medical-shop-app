@@ -260,6 +260,11 @@ td,
   color: var(--success);
 }
 
+.badge.warning {
+  background: rgba(239, 143, 52, 0.2);
+  color: #9a5400;
+}
+
 .qty-badge.ok {
   background: rgba(45, 143, 98, 0.14);
   color: var(--success);
@@ -268,6 +273,53 @@ td,
 .qty-badge.low {
   background: rgba(217, 79, 79, 0.12);
   color: var(--danger);
+}
+
+.expiry-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 7px 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.expiry-badge.ok {
+  background: rgba(45, 143, 98, 0.14);
+  color: var(--success);
+}
+
+.expiry-badge.warning {
+  background: rgba(239, 143, 52, 0.18);
+  color: #9a5400;
+}
+
+.expiry-badge.expired {
+  background: rgba(217, 79, 79, 0.14);
+  color: var(--danger);
+}
+
+.alert-panel {
+  border-color: rgba(239, 143, 52, 0.35);
+  background:
+    linear-gradient(180deg, rgba(239, 143, 52, 0.08), transparent 34%),
+    var(--panel);
+}
+
+.alert-list {
+  display: grid;
+  gap: 12px;
+}
+
+.alert-item {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: #fffaf3;
+  border: 1px solid rgba(239, 143, 52, 0.2);
 }
 
 .table-wrap {
@@ -463,6 +515,10 @@ select:focus {
   .dashboard-grid,
   .filters-grid,
   .invoice-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .alert-item {
     grid-template-columns: 1fr;
   }
 }

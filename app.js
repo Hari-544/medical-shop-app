@@ -22,6 +22,20 @@ const appState = {
   }
 };
 
+const medicineCategories = [
+  "Tablet",
+  "Capsule",
+  "Syrup",
+  "Injection",
+  "Ointment",
+  "Drops",
+  "Inhaler",
+  "Cream",
+  "Powder",
+  "Equipment",
+  "Other"
+];
+
 function setContent(html) {
   document.getElementById("content").innerHTML = html;
 }
@@ -59,6 +73,76 @@ function formatDate(value) {
   return date.toLocaleString();
 }
 
+function parseExpiryDate(value) {
+  if (!value) {
+    return null;
+  }
+
+  const date = new Date(`${value}T00:00:00`);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function startOfToday() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return today;
+}
+
+function getDaysUntilExpiry(expiry) {
+  const expiryDate = parseExpiryDate(expiry);
+  if (!expiryDate) {
+    return null;
+  }
+
+  const diffMs = expiryDate.getTime() - startOfToday().getTime();
+  return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+}
+
+function getExpiryStatus(expiry) {
+  const days = getDaysUntilExpiry(expiry);
+
+  if (days === null) {
+    return { label: "-", tone: "", days: null };
+  }
+
+  if (days < 0) {
+    return { label: "Expired", tone: "expired", days };
+  }
+
+  if (days <= 5) {
+    return { label: `Expires in ${days} day${days === 1 ? "" : "s"}`, tone: "warning", days };
+  }
+
+  return { label: expiry, tone: "ok", days };
+}
+
+function getExpiringMedicines() {
+  return readMeds()
+    .map((med) => ({ ...med, expiryInfo: getExpiryStatus(med.expiry) }))
+    .filter((med) => med.expiryInfo.days !== null && med.expiryInfo.days <= 5)
+    .sort((a, b) => a.expiryInfo.days - b.expiryInfo.days);
+}
+
+function notifyExpiryAlerts() {
+  const expiringMeds = getExpiringMedicines();
+  if (!expiringMeds.length) {
+    return;
+  }
+
+  const alertKey = `expiry-alert-${todayKey()}`;
+  if (localStorage.getItem(alertKey) === "shown") {
+    return;
+  }
+
+  const summary = expiringMeds
+    .slice(0, 3)
+    .map((med) => `${med.name} (${med.expiryInfo.label})`)
+    .join(", ");
+
+  alert(`Expiry alert: ${summary}${expiringMeds.length > 3 ? " and more." : "."}`);
+  localStorage.setItem(alertKey, "shown");
+}
+
 function todayKey() {
   return new Date().toLocaleDateString("en-IN");
 }
@@ -89,6 +173,7 @@ function renderDashboard() {
 
   const meds = readMeds();
   const sales = readSales();
+  const expiringMeds = getExpiringMedicines();
   const lowStockCount = meds.filter((med) => Number(med.qty) <= 10).length;
   const stockValue = meds.reduce((sum, med) => sum + Number(med.qty) * Number(med.price), 0);
   const todayIncome = sales
@@ -122,6 +207,28 @@ function renderDashboard() {
         <button class="btn-secondary" onclick="renderBillingEntry()">Create Bill</button>
       </div>
     </section>
+
+    ${expiringMeds.length ? `
+      <section class="panel card-section alert-panel">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Expiry alert</p>
+            <h3>${expiringMeds.length} medicine${expiringMeds.length === 1 ? "" : "s"} need attention within 5 days</h3>
+          </div>
+          <span class="badge warning">Check stock</span>
+        </div>
+        <div class="alert-list">
+          ${expiringMeds.slice(0, 5).map((med) => `
+            <div class="alert-item">
+              <strong>${escapeHtml(med.name)}</strong>
+              <span>${escapeHtml(med.barcode)}</span>
+              <span>${escapeHtml(med.expiry || "-")}</span>
+              <span class="expiry-badge ${med.expiryInfo.tone}">${escapeHtml(med.expiryInfo.label)}</span>
+            </div>
+          `).join("")}
+        </div>
+      </section>
+    ` : ""}
 
     <section class="stats-grid">
       <article class="stat-card">
@@ -231,7 +338,10 @@ function renderAddStock(scannedCode = "") {
         </label>
         <label>
           <span>Category</span>
-          <input id="category" placeholder="Tablet / Syrup / Injection" />
+          <select id="category">
+            <option value="">Select category</option>
+            ${medicineCategories.map((category) => `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`).join("")}
+          </select>
         </label>
         <label>
           <span>Manufacturer</span>
@@ -379,6 +489,9 @@ function renderInventory() {
             </thead>
             <tbody>
               ${meds.map((med) => `
+                ${(() => {
+                  const expiryInfo = getExpiryStatus(med.expiry);
+                  return `
                 <tr>
                   <td>
                     <strong>${escapeHtml(med.name)}</strong>
@@ -388,8 +501,10 @@ function renderInventory() {
                   <td>${escapeHtml(med.manufacturer || "-")}</td>
                   <td><span class="qty-badge ${Number(med.qty) <= 10 ? "low" : "ok"}">${escapeHtml(med.qty)}</span></td>
                   <td>${formatCurrency(med.price)}</td>
-                  <td>${escapeHtml(med.expiry || "-")}</td>
+                  <td><span class="expiry-badge ${expiryInfo.tone}">${escapeHtml(expiryInfo.label)}</span></td>
                 </tr>
+              `;
+                })()}
               `).join("")}
             </tbody>
           </table>
@@ -786,4 +901,5 @@ function logout() {
   window.location.href = "login.html";
 }
 
+notifyExpiryAlerts();
 renderDashboard();
