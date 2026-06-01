@@ -9,7 +9,7 @@ A simple frontend-based web application designed for local medical shopkeepers t
 👉 (After deployment, add your link here)
 
 ```
-https://your-username.github.io/medical-shop-app
+https://Hari-544.github.io/medical-shop-app
 ```
 
 ---
